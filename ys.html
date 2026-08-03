@@ -1379,6 +1379,7 @@ function generatePlayerHtml(detail, epIdx, resumeTime) {
   html += '<span class="tb-title" id="playerTitle">' + title + '</span>';
   html += '<button class="tb-btn" id="danmakuToggleBtn" onclick="toggleDanmaku()"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg></button>';
   html += '<button class="tb-btn" id="dmSettingsBtn" onclick="toggleDmSettingsPanel()" style="padding:4px 2px"><svg viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg></button>';
+  html += '<button class="tb-btn" id="favBtn" onclick="togglePlayerFav()"><svg id="favIcon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>';
   html += '<button class="tb-btn" id="settingsBtn" onclick="toggleSettingsPanel()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>';
   html += '</div>';
   html += '<div class="center-ctrls" id="centerPlay">';
@@ -1465,6 +1466,8 @@ function generatePlayerHtml(detail, epIdx, resumeTime) {
   html += 'var workingProxyIdx = 0;';
   html += 'function el(id){return document.getElementById(id);}';
   html += 'function showToast(msg,dur){try{parent.showToast(msg,dur||2000);}catch(e){}}';
+  html += 'function updateFavIcon(){var icon=el("favIcon");if(!icon)return;var isFav=false;try{isFav=parent.isFavorited(detailData.vod_name);}catch(e){}if(isFav){icon.setAttribute("fill","#FFD600");icon.setAttribute("stroke","#FFD600");}else{icon.setAttribute("fill","none");icon.setAttribute("stroke","#fff");}}';
+  html += 'function togglePlayerFav(){var title=detailData.vod_name;var isFav=false;try{isFav=parent.isFavorited(title);}catch(e){}if(isFav){try{parent.removeFavoriteByName(title);}catch(e){}}else{try{parent.addFavoriteByName(detailData);}catch(e){}}updateFavIcon();}';
   html += 'function showLoading(){el("playerLoading").classList.add("show");}';
   html += 'function hideLoading(){el("playerLoading").classList.remove("show");}';
 
@@ -1694,6 +1697,7 @@ function generatePlayerHtml(detail, epIdx, resumeTime) {
   html += 'setupLongPress(el("markIntroBtn"),markIntroEnd,clearIntroMark);';
   html += 'setupLongPress(el("markOutroBtn"),markOutroStart,clearOutroMark);';
   html += 'initDanmaku();';
+  html += 'updateFavIcon();';
   html += 'applyAspectRatio();';
   html += 'if(dmState.enabled){el("danmakuToggleBtn").classList.add("active");}';
   html += 'el("speedLabel").textContent=pState.speed.toFixed(1)+"x";';
