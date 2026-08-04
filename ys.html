@@ -1019,13 +1019,19 @@ function showDetail(item) {
   var fallbackTimer = setTimeout(function() {
     if (!found) { found = true; openDetailFrame(item); }
   }, 12000);
-  sources.forEach(function(source) {
+  var preferredUrl = State.currentSourceUrl || getHomeSourceUrl();
+  var orderedSources = sources.slice().sort(function(a, b) {
+    if (a.url === preferredUrl) return -1;
+    if (b.url === preferredUrl) return 1;
+    return 0;
+  });
+  orderedSources.forEach(function(source) {
     var apiUrl = source.url + '?ac=detail&ids=' + item.vod_id;
     fetchJson(apiUrl, function(data) {
       if (found) return;
       if (data && data.list && data.list.length > 0) {
         var detail = data.list[0];
-        if (detail.vod_play_url && detail.vod_play_url.trim()) {
+        if (detail.vod_play_url && detail.vod_play_url.trim() && _titleMatch(item.vod_name, detail.vod_name)) {
           found = true;
           clearTimeout(fallbackTimer);
           State.currentSourceUrl = source.url;
