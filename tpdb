@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图集打包工具</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{padding:24px 16px;background:#f6f7f9;font-family:system-ui,sans-serif}
+.box{max-width:680px;margin:0 auto}
+h2{margin-bottom:16px;font-size:19px;color:#222}
+textarea{width:100%;min-height:260px;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;resize:vertical;background:#fff}
+.btn-row{display:flex;gap:10px;margin-top:16px}
+button{flex:1;padding:13px;border:none;border-radius:8px;font-size:16px;cursor:pointer}
+button:active{opacity:.85}
+#packBtn{background:#2563eb;color:#fff}
+#pasteBtn{background:#6c757d;color:#fff}
+.prog-wrap{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:14px}
+#bar{height:100%;width:0;background:linear-gradient(90deg,#2563eb,#22c55e);transition:width .2s}
+#stat{margin-top:8px;font-size:13px;color:#444;min-height:18px}
+#log{margin-top:10px;padding:12px;background:#fff;border-radius:8px;font-size:13px;white-space:pre-wrap;max-height:220px;overflow:auto}
+.tip{margin-top:10px;font-size:12px;color:#888;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>图集一键打包</h2>
+<textarea id="inputBox" placeholder="第一行：图集名称&#10;下面每行一条图片链接"></textarea>
+<div class="btn-row">
+<button id="pasteBtn">清空内容</button>
+<button id="packBtn">开始打包下载</button>
+</div>
+<div class="prog-wrap"><div id="bar"></div></div>
+<div id="stat">就绪</div>
+<div id="log"></div>
+<div class="tip">纯前端拉取打包，受图床跨域(CORS)限制</div>
+</div>
+<script>
+const $=id=>document.getElementById(id),logEl=$('log'),statEl=$('stat'),barEl=$('bar');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const log=s=>{logEl.innerText+=s+'\n';logEl.scrollTop=logEl.scrollHeight};
+const setBar=p=>barEl.style.width=(p*100).toFixed(1)+'%';
+const fmtSize=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':n>=1024?(n/1024).toFixed(0)+' KB':n+' B';
+
+$('pasteBtn').onclick=()=>{const ta=$('inputBox');ta.value='';ta.focus();ta.select();log('✅已清空，长按输入框选【粘贴】')};
+
+function extractUrls(lines){
+  const urls=[];
+  for(const l of lines){
+    const m=l.match(/https?:\/\/[^\s"'<>]+/g);
+    if(m)urls.push(...m);
+    else if(l.startsWith('//'))urls.push('https:'+l);
+  }
+  return [...new Set(urls)];
+}
+
+const detectExt=blob=>blob.slice(0,12).arrayBuffer().then(b=>{
+  const d=new Uint8Array(b);
+  if(d[0]===0xFF&&d[1]===0xD8)return'jpg';
+  if(d[0]===0x89&&d[1]===0x50)return'png';
+  if(d[0]===0x47&&d[1]===0x49)return'gif';
+  if(d[0]===0x42&&d[1]===0x4D)return'bmp';
+  if(d[0]===0x52&&d[1]===0x49)return'webp';
+  const t=blob.type||'';
+  if(/jpe?g/i.test(t))return'jpg';
+  if(/png/i.test(t))return'png';
+  if(/webp/i.test(t))return'webp';
+  if(/gif/i.test(t))return'gif';
+  return'img';
+});
+
+async function downloadOne(url){
+  for(let i=1;i<=3;i++){
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),12000*i);
+    try{
+      const res=await fetch(url,{cache:'force-cache',signal:ctl.signal,redirect:'follow'});
+      clearTimeout(timer);
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const blob=await res.blob();
+      if(!blob.size)throw new Error('空文件');
+      return{ok:true,blob,ext:await detectExt(blob),size:blob.size};
+    }catch(e){
+      clearTimeout(timer);
+      if(i<3)await sleep(600*2**(i-1));
+      if(i===3)return{ok:false,err:e};
+    }
+  }
+}
+
+function runAdaptive(tasks,worker,onProgress){
+  let idx=0,active=0,conc=8;
+  const rec=[];
+  const adjust=()=>{
+    if(rec.length<24)return;
+    const ok=rec.filter(Boolean).length/rec.length;
+    if(ok>.85&&conc<14)conc++;
+    else if(ok<.6&&conc>4)conc--;
+  };
+  const pump=()=>{
+    while(active<conc&&idx<tasks.length){
+      const i=idx++;active++;
+      worker(tasks[i],i)
+        .then(ok=>rec.push(ok!==false))
+        .catch(()=>rec.push(false))
+        .finally(()=>{
+          active--;
+          if(rec.length>40)rec.splice(0,rec.length-40);
+          adjust();onProgress();pump();
+        });
+    }
+  };
+  return new Promise(r=>{
+    pump();
+    (async()=>{while(active||idx<tasks.length)await sleep(80);r()})();
+  });
+}
+
+async function doPack(){
+  if(typeof JSZip==='undefined')return log('❌JSZip加载失败，请刷新重试');
+  logEl.innerText='';setBar(0);statEl.innerText='';
+  const lines=$('inputBox').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(lines.length<2)return log('❌格式错误：第一行图集名，之后每行一条链接');
+  const name=(lines[0].replace(/[\\/:*?"<>|]/g,'').trim()||'图集');
+  const urls=extractUrls(lines.slice(1));
+  if(!urls.length)return log('❌未识别到图片链接');
+  try{await navigator.clipboard.writeText(name);log('📋已复制图集名：'+name)}catch{log('⚠️请手动记录：'+name)}
+
+  log(`图集「${name}」，${urls.length}张（已去重），开始打包…`);
+  const zip=new JSZip();
+  let ok=0,bytes=0,start=Date.now(),warned=false;
+  const extC={};
+  const tasks=urls.map(url=>({url,run:()=>downloadOne(url)}));
+
+  await runAdaptive(tasks,async t=>{
+    const r=await t.run();
+    if(r.ok){
+      zip.file(String(ok+1).padStart(3,'0')+'.'+r.ext,r.blob);
+      ok++;bytes+=r.size;extC[r.ext]=(extC[r.ext]||0)+1;
+      if(bytes>900*1048576&&!warned){warned=true;log('⚠️已超900MB，建议分批')}
+      return true;
+    }
+    log('✗失败('+(r.err?.message||'未知')+') '+t.url);
+    return false;
+  },()=>{
+    const p=urls.length?ok/urls.length:0,el=(Date.now()-start)/1000;
+    setBar(p);statEl.innerText=`已下载 ${ok}/${urls.length} 总大小 ${fmtSize(bytes)} 速度 ${fmtSize(el>0?bytes/el:0)}/s`;
+  });
+
+  setBar(ok/urls.length);statEl.innerText=`已下载 ${ok}/${urls.length} 总大小 ${fmtSize(bytes)}`;
+  log(`\n✅拉取结束：成功${ok}，失败${urls.length-ok}`);
+  if(!ok)return log('❌无可用图片，取消打包');
+  log('格式：'+Object.entries(extC).map(([k,v])=>k+'×'+v).join('，'));
+
+  log('⏳正在生成ZIP（无压缩）…');
+  await sleep(50);
+  let blob;
+  try{
+    blob=await zip.generateAsync({type:'blob',compression:'STORE',onUpdate:m=>statEl.innerText='正在生成ZIP：'+m.percent.toFixed(0)+'%'});
+  }catch(e){statEl.innerText='';return log('❌生成ZIP失败：'+(e.message||e))}
+  statEl.innerText='';
+  if(!blob?.size)return log('❌压缩包为空');
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name+'.zip';document.body.appendChild(a);
+  setTimeout(()=>a.click(),80);
+  setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},1500);
+  log('✅已发起下载：'+name+'.zip（'+fmtSize(blob.size)+'）');
+}
+$('packBtn').onclick=doPack;
+</script>
+</body>
+</html>
