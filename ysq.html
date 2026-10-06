@@ -1030,17 +1030,47 @@ a { text-decoration:none; color:#333; }
     $homeBtn.classList.remove('active');
     $topCard.style.display = 'none';
     closeForumPop();
+    ensureLayer();
     load();
   }
 
-  $homeBtn.addEventListener('click', function(){ if (view !== 'new') goHome(); });
+  function closeForumPop(){ $forumPop.classList.remove('show'); }
+
+  var layered = false, backLock = false;
+  function ensureLayer(){
+    if (layered) return;
+    try { history.pushState({ysq:1}, '', location.href); layered = true; } catch(e){}
+  }
+  function layerBack(){
+    if (layered){ try { history.back(); return; } catch(e){} }
+    handleBack();
+  }
+  function handleBack(){
+    if (backLock) return;
+    backLock = true;
+    setTimeout(function(){ backLock = false; }, 200);
+    layered = false;
+    if ($forumPop.classList.contains('show')){
+      closeForumPop();
+      if ($settingsOverlay.classList.contains('active') || view === 'forum') ensureLayer();
+      return;
+    }
+    if ($settingsOverlay.classList.contains('active')){
+      applyFilterAndReload();
+      return;
+    }
+    if (view === 'forum') goHome();
+  }
+  window.addEventListener('popstate', function(){ if (layered) handleBack(); });
+
+  $homeBtn.addEventListener('click', function(){ if (view !== 'new') layerBack(); });
 
   $viewBtn.addEventListener('click', function(){
     renderForumPop();
     $forumPop.classList.add('show');
+    ensureLayer();
   });
-  $forumPopMask.addEventListener('click', function(){ closeForumPop(); });
-  function closeForumPop(){ $forumPop.classList.remove('show'); }
+  $forumPopMask.addEventListener('click', function(){ layerBack(); });
 
   function renderForumPop(){
     var selectedBlocks = BLOCKS.filter(function(b){ return filterBlocks.indexOf(b.name) > -1; });
@@ -1089,26 +1119,19 @@ a { text-decoration:none; color:#333; }
   function openSettings(){
     renderSettings();
     $settingsOverlay.classList.add('active');
+    ensureLayer();
   }
   function closeSettings(){ $settingsOverlay.classList.remove('active'); }
 
-  /* 设置返回：像首次进入一样，置顶区和新帖一起重新加载 */
   function applyFilterAndReload(){
     lsSet('src_filter_on', filterOn);
     lsJSet('src_filter_blocks', filterBlocks);
     closeSettings();
-    if (view === 'forum'){
-      goHome();
-    } else {
-      resetTopForHome();
-      page = 1; hasMore = true; loading = false;
-      $wrap.innerHTML = '';
-      load();
-    }
+    goHome();
   }
 
   $settingsBtn.addEventListener('click', function(){ openSettings(); });
-  $settingsClose.addEventListener('click', function(){ applyFilterAndReload(); });
+  $settingsClose.addEventListener('click', function(){ layerBack(); });
   $filterSwitch.addEventListener('click', function(){
     filterOn = !filterOn;
     $filterSwitch.classList.toggle('active', filterOn);
@@ -1149,6 +1172,7 @@ a { text-decoration:none; color:#333; }
     }
   }
 
+  if (view === 'forum') ensureLayer();
   load();
 })();
 </script>
