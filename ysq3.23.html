@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>window.BASE_URL=window.location.origin;</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+  <title>源社区 3.23· 补丁版</title>
+  <script src="/source/plugin/bphp_clouds/upload/32952/jquery.min.js"></script><script>window.jQuery||document.write('<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"><\/script>')</script>
+  <link rel="shortcut icon" href="template/comiis_app/comiis/img/favicon.ico">
+  <link rel="stylesheet" href="/template/comiis_app/comiis/css/comiis.css?hq0">
+  <style>/* styles loaded remotely */</style>
+</head>
+<body>
+
+  <div id="splash"><div class="lg">源</div><div class="nm">源社区</div><div class="bar"><i></i></div></div>
+  <div id="bgLayer"></div>
+  <div id="toastContainer"></div>
+
+  <div class="sign-bar-box">
+    <div class="sign-bar-wrap">
+      <div class="menu-icon" id="menuIcon"><span></span><span></span><span></span></div>
+      <a id="userBtn" href="home.php?mod=space&do=profile&mycenter=1&mobile=2">
+<span class="nav-avatar" id="navAvatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+<script>try{var ca=localStorage.getItem("cached_avatar");if(ca){document.getElementById("navAvatar").innerHTML='<img src="'+ca+'">';}}catch(e){}</script>
+      </a>
+      <div class="nav-scroll-wrap" id="scrollWrap">
+        <div id="navHomeSlot"></div>
+        <div class="nav-scroll" id="dynamicNavArea"></div>
+        <div class="nav-scroll" id="sourceCatArea" style="display:none;"></div>
+      </div>
+      <button class="nav-search-btn" id="navSearchBtn" title="搜索">
+        <svg viewBox="0 0 24 24" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.2-4.2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="search-popup" id="searchPopup"></div>
+  <div id="rankingContainer"></div>
+  <div class="menu-popup" id="menuPopup"></div>
+  <div class="popup-mask" id="bookmarkMask"></div>
+  <div class="center-popup" id="bookmarkPopup"><div class="popup-header">🔖 书签<span class="close-btn" id="closeBookmarkBtn">×</span></div><div class="popup-body" id="bookmarkBody"></div></div>
+  <div class="popup-mask" id="sourceCatMask"></div>
+  <div class="center-popup" id="sourceCatPopup"><div class="popup-header" id="sourceCatHeader"></div><div class="popup-body" id="sourceCatBody"></div></div>
+
+  <div id="list_new_28">
+    <div id="inlineRankWrap" style="display:none;">
+      <div class="inline-rank-header">
+        <h2><em></em>七日排行</h2>
+        <span class="inline-rank-toggle" id="inlineRankToggle">展开排行</span>
+      </div>
+      <div class="inline-rank-body" id="inlineRankBody"></div>
+    </div>
+    <div class="comiis_forumlist comiis_xznlist mb0 cl">
+      <ul id="thread_list"></ul>
+    </div>
+    <div id="load_tip" class="load-tips" style="display:none;"></div>
+  </div>
+
+  <div class="bottom-bar-box">
+    <div class="bottom-bar-wrap">
+      <a class="bottom-bar-item" id="bottomBtnScript" href="javascript:void(0);">
+        <svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 4v5h5"/><path d="M8 13l2 2-2 2"/><path d="M12 17h4"/></svg><span>脚本</span>
+      </a>
+      <a class="bottom-nav-item" id="cloudBtn" href="javascript:void(0);">
+        <svg viewBox="0 0 24 24"><path d="M3 16a4 4 0 0 1 4-4 6 6 0 0 1 11-1 4.5 4.5 0 0 1-1 9H7a4 4 0 0 1-4-4z"/></svg><span>云盘</span>
+      </a>
+      <a class="bottom-bar-item" id="bottomPostBtn">
+        <svg viewBox="0 0 24 24"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/><path d="M12 4L4 12v4h4l8-8"/></svg><span>发帖</span>
+      </a>
+      <a class="bottom-bar-item" id="bottomBtnBookmark" href="javascript:void(0);">
+        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>书签</span>
+      </a>
+      <a class="bottom-nav-item" id="bottomBtnMe" href="javascript:void(0);">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span id="bottomBtnMeLabel">源仓库</span>
+      </a>
+    </div>
+  </div>
+
+  <div id="postMenuBg" class="post-menu-bg"></div>
+  <div id="postForumMenu"></div>
+  <div id="settingsOverlay"></div>
+  <div id="confirmDialog"></div>
+  <div class="processing-indicator" id="processingIndicator"></div>
+
+  <script>
+  /* ===== 引擎：加载远程 base + style ===== */
+  (function(){
+    var P=(window.BASE_URL||'')+'/source/plugin/bphp_clouds/upload/32952/';
+    var BASE_URL=P+'20261004/e0b6b72f20dfaafe95b5c80a092f2650.json';
+    var STYLE_URL=P+'20261004/2c89208da29806c30fc35c0a2fccfe3b.json';
+    function exec(code){var s=document.createElement('script');s.textContent=code;document.head.appendChild(s);}
+    function applyStyle(css){var s=document.createElement('style');s.textContent=css;document.head.appendChild(s);}
+    function err(){
+      offSplash();
+      var t=document.createElement('div');
+      t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;color:#c62828;padding:20px 28px;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.2);z-index:999999;text-align:center;font-size:14px;line-height:1.8';
+      t.innerHTML='模块加载失败<br>请检查URL是否正确';
+      document.body.appendChild(t);
+    }
+    function xhr(url,cb,opts){opts=opts||{};var x=new XMLHttpRequest();x.open('GET',url,true);if(opts.mime)x.overrideMimeType(opts.mime);x.timeout=opts.timeout||15000;x.onload=function(){if(x.status>=200&&x.status<300)cb(null,x.responseText);else cb(x.status)};x.ontimeout=function(){cb('timeout')};x.onerror=function(){cb('error')};x.send();return x}
+    function offSplash(){try{var s=document.getElementById('splash');if(s&&!s.classList.contains('off'))s.classList.add('off');}catch(e){}}
+    window._offSplash=offSplash;
+    var cs=null;try{cs=JSON.parse(localStorage.getItem('cached_style'));}catch(e){}
+    if(cs&&cs.style){applyStyle(cs.style);}
+    else{
+      xhr(STYLE_URL,function(eSt,txt){
+        if(eSt)return;
+        try{var d=JSON.parse(txt);if(d&&d.style){applyStyle(d.style);try{localStorage.setItem('cached_style',JSON.stringify({style:d.style}));if(d.mtime)localStorage.setItem('cached_style_mtime',d.mtime);}catch(e){}}}catch(e){}
+      },{mime:'application/json'});
+    }
+    var cb=null;try{cb=JSON.parse(localStorage.getItem('cached_base'));}catch(e){}
+    var _baseCode=null,_execed=false,_jqWait=false;
+    function tryExec(){
+      if(_execed)return;
+      if(_baseCode&&window.jQuery){_execed=true;exec(_baseCode);}
+      else if(_baseCode&&!_jqWait){_jqWait=true;var ci=setInterval(function(){if(window.jQuery){clearInterval(ci);if(!_execed){_execed=true;exec(_baseCode);}}},50);}
+    }
+    if(cb&&cb.code){_baseCode=cb.code;tryExec();}
+    else{
+      xhr(BASE_URL,function(eSt,txt){
+        if(eSt){err();return;}
+        try{var d=JSON.parse(txt);if(d&&d.code){
+          try{localStorage.setItem('cached_base',JSON.stringify({code:d.code}));if(d.mtime)localStorage.setItem('cached_base_mtime',d.mtime);}catch(e){}
+          _baseCode=d.code;tryExec();
+        }else{err();}}catch(e){err();}
+      },{mime:'application/json'});
+    }
+    window._updateCache=function(){
+      var bm=localStorage.getItem('cached_base_mtime')||'';
+      xhr(BASE_URL,function(eSt,txt){if(eSt)return;try{var d=JSON.parse(txt);if(!d||!d.code)return;if(d.mtime&&d.mtime===bm)return;try{localStorage.setItem('cached_base',JSON.stringify({code:d.code}));if(d.mtime)localStorage.setItem('cached_base_mtime',d.mtime);}catch(e){}}catch(e){}},{mime:'application/json'});
+      var sm=localStorage.getItem('cached_style_mtime')||'';
+      xhr(STYLE_URL,function(eSt,txt){if(eSt)return;try{var d=JSON.parse(txt);if(!d||!d.style)return;if(d.mtime&&d.mtime===sm)return;try{localStorage.setItem('cached_style',JSON.stringify({style:d.style}));if(d.mtime)localStorage.setItem('cached_style_mtime',d.mtime);}catch(e){}}catch(e){}},{mime:'application/json'});
+    };
+    setTimeout(offSplash,5500);
+    var _n=0,_t=setInterval(function(){
+      _n++;
+      var ready=document.querySelector('#thread_list li:not(.load-tips),#dynamicNavArea .nav-blk,#navHomeSlot .nav-blk');
+      if(ready){clearInterval(_t);setTimeout(offSplash,320)}
+      else if(_n>36){clearInterval(_t)}
+    },250);
+  })();
+  </script>
+
+  
+
+  
+
+</body>
+</html>
